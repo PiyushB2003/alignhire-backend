@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { generateOtp } from "../utils/generate-otp.js";
 import jwt from "jsonwebtoken";
+import { sendOtpEmail } from "../services/send-mail.service.js";
 
 export const register = async (req, res) => {
     try {
@@ -21,7 +22,10 @@ export const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+
         const otp = generateOtp();
+        await sendOtpEmail(email, otp);
+        
         const hashedOtp = await bcrypt.hash(otp.toString(), 10)
 
         const user = await User.create({
