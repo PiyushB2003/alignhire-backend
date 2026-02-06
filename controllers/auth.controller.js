@@ -1,13 +1,14 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { generateOtp } from "../utils/generate-otp.js";
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
+        const { name, email, password, confirmPassword } = req.body;
+        if (!name || !email || !password || !confirmPassword) {
             return res.status(400).json({
-                message: "Email and password are required",
+                message: "All fields are required",
                 status: false
             });
         }
@@ -15,6 +16,12 @@ export const register = async (req, res) => {
         if (isUserExist) {
             return res.status(400).json({
                 message: "User already exist",
+                status: false
+            });
+        }
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match",
                 status: false
             });
         }
@@ -84,4 +91,49 @@ export const verifyOtp = async (req, res) => {
             status: false
         })
     }
+}
+
+export const login = async (req, res) => {
+    const {email, password} = req.body;
+    if(!email || !password) {
+        return res.status(400).json({
+            message: "All fields are required",
+            status: false
+        });
+    }
+    const user = await User.findOne({email});
+    if(!user){
+        return res.status(400).json({
+            message: "User not found",
+            status: false
+        })
+    }
+    if(user.isVerified === false){
+        return res.status(400).json({
+            message: "User not verified",
+            status: false
+        })
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if(!isPasswordCorrect){
+        return res.status(400).json({
+            message: "Invalid credentials",
+            status: false
+        })
+    }
+    const token = jwt.sign(
+        { userId: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    )
+    return res.status(200).json({
+        message: "Login successfull",
+        token,
+        status: true,
+        user: {
+            id: user._id,
+            email: user.email,
+            name: user.name
+        }
+    })
 }
