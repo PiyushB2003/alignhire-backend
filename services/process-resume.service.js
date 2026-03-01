@@ -1,11 +1,12 @@
-// import { extractText } from "./textExtraction.service.js";
 // import { generateEmbedding } from "./embedding.service.js";
 // import { Resume } from "../models/resume.model.js";
 // import { cleanText } from "../utils/cleanText.js";
+import { extractText } from "./extract-text.service.js";
 
 export const processResume = async (file) => {
   // 1. Extract text
-  //   const rawText = await extractText(file.path);
+    const rawText = await extractText(file.path);
+    return rawText;
   //   // 2. Clean text
   //   const cleanedText = cleanText(rawText);
   //   // 3. Extract metadata (basic example)
