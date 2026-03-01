@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.model.js";
-import { generateOtp } from "../utils/generate-otp.js";
 import jwt from "jsonwebtoken";
-import { sendOtpEmail } from "../services/send-mail.service.js";
+import crypto from "crypto";
+import { generateOtp } from "../utils/generate-otp.js";
+import { sendOtpEmail, sendResetPasswordLink } from "../services/send-mail.service.js";
 
 export const register = async (req, res) => {
     try {
@@ -100,7 +101,7 @@ export const resendOtp = async (req, res) => {
     try {
         const { email } = req.body;
 
-        if(!email){
+        if (!email) {
             return res.status(400).json({ message: "Email is required", status: false });
         }
 
@@ -110,7 +111,7 @@ export const resendOtp = async (req, res) => {
             return res.status(400).json({ message: "User not found", status: false });
         }
 
-        if(user.isVerified){
+        if (user.isVerified) {
             return res.status(400).json({ message: "User already verified", status: false });
         }
 
@@ -172,5 +173,114 @@ export const login = async (req, res) => {
     } catch (error) {
         console.error("Error in login", error);
         return res.status(500).json({ message: error.message, status: false })
+    }
+}
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Email is required", status: false });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "User not found", status: false });
+        }
+
+        const resetToken = crypto
+            .randomBytes(32)
+            .toString("hex");
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(resetToken)
+            .digest("hex");
+
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+        await user.save();
+
+        const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+        await sendResetPasswordLink(
+            email,
+            `Click this link to reset your password: ${resetUrl}`
+        );
+
+        return res.status(200).json({
+            message: "Reset password link sent to your email",
+            status: true
+        });
+    } catch (error) {
+        console.error("Error in forgotPassword", error);
+        return res.status(500).json({ message: error.message, status: false })
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword, confirmPassword } = req.body;
+        if (!token) {
+            return res.status(400).json({ message: "Token is required", status: false });
+        }
+        if (!newPassword || !confirmPassword) {
+            return res.status(400).json({
+                message: "All fields are required",
+                status: false
+            });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match",
+                status: false
+            });
+        }
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(token)
+            .digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { $gt: Date.now() }
+        })
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid or expired token",
+                status: false
+            });
+        }
+
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedNewPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Password reset successfully",
+            status: true
+        })
+    } catch (error) {
+        console.error("Error in resetPassword", error);
+        return res.status(500).json({ message: error.message, status: false })
+    }
+}
+
+export const logout = async (req, res) => {
+    try {
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: true, //process.env.NODE_ENV === "production",
+            sameSite: "strict",
+        })
+
+        return res.status(200).json({ message: "Logout successfull", status: true })
+    } catch (error) {
+        console.error("Error in logout", error);
+        res.status(500).json({ message: error.message, status: false })
     }
 }

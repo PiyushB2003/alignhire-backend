@@ -27,3 +27,37 @@ export const sendOtpEmail = async (to, otp) => {
         throw error;
     }
 };
+
+export const sendResetPasswordLink = async (to, resetUrl) => {
+    try {
+        await resend.emails.send({
+            from: `AlignHire AI <${process.env.FROM_EMAIL}>`,
+            to,
+            subject: "Reset your password",
+            html: `
+                <h2>Password Reset Request</h2>
+                <p>You requested to reset your password.</p>
+                <p>Click the button below to reset it:</p>
+                
+                <a href="${resetUrl}" 
+                style="display:inline-block;
+                        padding:10px 20px;
+                        background-color:#4f46e5;
+                        color:#ffffff;
+                        text-decoration:none;
+                        border-radius:5px;">
+                    Reset Password
+                </a>
+
+                <p>This link will expire in 15 minutes.</p>
+                <br/>
+                <p>If you didn't request this, you can safely ignore this email.</p>
+            `
+        })
+
+        console.log("Reset password link sent successfully");
+    } catch (error) {
+        console.error("Error sending reset password link:", error);
+        throw error;
+    }
+}
