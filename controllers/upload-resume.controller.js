@@ -5,11 +5,8 @@ export const uploadResume = async (req, res) => {
     try {
         const file = req.file;
         const { id } = req.body;
-        if (!file) {
-            return res.status(400).json({ message: "File not found", status: false });
-        }
 
-        const result = await processResume(req.file, id)
+        const result = await processResume(file, id)
         if (!result) {
             return res.status(400).json({ message: "Resume not processed", status: false });
         }

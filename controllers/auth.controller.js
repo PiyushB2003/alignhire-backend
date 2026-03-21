@@ -9,10 +9,6 @@ export const register = async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
 
-        if (!name || !email || !password || !confirmPassword) {
-            return res.status(400).json({ message: "All fields are required", status: false });
-        }
-
         const isUserExist = await User.findOne({ email });
         if (isUserExist) {
             return res.status(400).json({ message: "User already exist", status: false });
@@ -48,10 +44,6 @@ export const register = async (req, res) => {
 export const verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
-
-        if (!email || !otp) {
-            return res.status(400).json({ message: "All fields are required", status: false });
-        }
 
         const user = await User.findOne({ email });
 
@@ -101,10 +93,6 @@ export const resendOtp = async (req, res) => {
     try {
         const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ message: "Email is required", status: false });
-        }
-
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -135,10 +123,6 @@ export const resendOtp = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({ message: "All fields are required", status: false });
-        }
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -179,9 +163,6 @@ export const login = async (req, res) => {
 export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ message: "Email is required", status: false });
-        }
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -221,15 +202,7 @@ export const resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { newPassword, confirmPassword } = req.body;
-        if (!token) {
-            return res.status(400).json({ message: "Token is required", status: false });
-        }
-        if (!newPassword || !confirmPassword) {
-            return res.status(400).json({
-                message: "All fields are required",
-                status: false
-            });
-        }
+
         if (newPassword !== confirmPassword) {
             return res.status(400).json({
                 message: "Passwords do not match",
