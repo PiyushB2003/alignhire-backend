@@ -2,8 +2,8 @@ import path from "path";
 import { PDFParse } from 'pdf-parse';
 import mammoth from "mammoth";
 import tesseract from "tesseract.js";
-import { convertPdfToImage } from "../utils/pdf-to-image.js";
-import { enhanceImage } from "../utils/enhance-image.js";
+import { convertPdfToImage } from "../utils/pdf-to-image.utils.js";
+import { enhanceImage } from "../utils/enhance-image.utils.js";
 
 export const extractText = async (filePath) => {
     const ext = path.extname(filePath).toLowerCase();

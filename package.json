@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/PiyushB2003/alignhire-backend#readme",
   "dependencies": {
+    "@google/genai": "^1.45.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

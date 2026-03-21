@@ -6,6 +6,6 @@ import { protectRoute } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/upload-resume", protectRoute, uploadResumeMiddleware, uploadResume);
+router.post("/upload-resume", uploadResumeMiddleware, uploadResume);
 
 export default router;
